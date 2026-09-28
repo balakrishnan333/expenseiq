@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function own(uid) { return request.auth != null && request.auth.uid == uid; }
+    function txt(v, n) { return v is string && v.size() > 0 && v.size() <= n; }
+    function amt(v) { return v is number && v > 0 && v <= 100000000; }
+    function day(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
+    function cats(v) { return v in ['Food','Shopping','Transport','Bills','Entertainment','Healthcare','Education','Travel','Subscriptions','Groceries','Salary','Freelance','Other']; }
+    function pay(v) { return v in ['Cash','UPI','Debit Card','Credit Card','Bank Transfer','Other']; }
+    function hex(v) { return v is string && v.matches('^#[0-9a-fA-F]{6}$'); }
+
+    function validProfile(uid, d) {
+      return d.keys().hasOnly(['uid','displayName','email','photoURL','currency','createdAt','updatedAt'])
+        && d.uid == uid && d.displayName is string && d.displayName.size() <= 60
+        && d.currency in ['INR','USD','EUR','GBP'];
+    }
+    function validTx(d) {
+      return d.keys().hasAll(['type','amount','description','category','paymentMethod','date'])
+        && d.keys().hasOnly(['type','amount','description','category','paymentMethod','date','notes','receiptUrl','receiptPath','demo','createdAt','updatedAt'])
+        && d.type in ['expense','income'] && amt(d.amount) && txt(d.description, 120) && cats(d.category) && pay(d.paymentMethod)
+        && day(d.date) && d.get('notes','').size() <= 500;
+    }
+    function validGoal(d) {
+      return d.keys().hasAll(['name','targetAmount','currentAmount'])
+        && d.keys().hasOnly(['name','icon','color','targetAmount','currentAmount','targetDate','demo','createdAt','updatedAt'])
+        && txt(d.name, 60) && amt(d.targetAmount) && d.currentAmount is number && d.currentAmount >= 0 && d.currentAmount <= 1000000000
+        && d.get('icon','').size() <= 16 && hex(d.get('color','#000000')) && d.get('targetDate','').size() <= 10;
+    }
+    function validRec(d) {
+      return d.keys().hasAll(['name','amount','frequency','nextDueDate','active'])
+        && d.keys().hasOnly(['name','amount','category','frequency','nextDueDate','paymentMethod','active','icon','color','demo','createdAt','updatedAt'])
+        && txt(d.name, 60) && amt(d.amount) && d.frequency in ['Weekly','Monthly','Yearly'] && day(d.nextDueDate)
+        && d.active is bool && cats(d.get('category','Other')) && pay(d.get('paymentMethod','Other'))
+        && d.get('icon','').size() <= 16 && hex(d.get('color','#000000'));
+    }
+
+    match /users/{uid} {
+      allow read: if own(uid);
+      allow create, update: if own(uid) && validProfile(uid, request.resource.data);
+      allow delete: if false;                       // account deletion runs in the deleteAccount Cloud Function
+
+      match /transactions/{id}      { allow read, delete: if own(uid); allow create, update: if own(uid) && validTx(request.resource.data); }
+      match /goals/{id}             { allow read, delete: if own(uid); allow create, update: if own(uid) && validGoal(request.resource.data); }
+      match /recurringExpenses/{id} { allow read, delete: if own(uid); allow create, update: if own(uid) && validRec(request.resource.data); }
+      match /notifications/{id} {
+        allow read, delete: if own(uid);
+        allow update: if own(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create: if false;                     // created by Cloud Functions only
+      }
+      match /settings/{id} {
+        allow read: if own(uid);
+        allow write: if own(uid) && request.resource.data.keys().hasOnly(['dark','monday','n1','n2','n3','updatedAt'])
+          && request.resource.data.get('dark',false) is bool && request.resource.data.get('monday',false) is bool;
+      }
+      match /monthlySummaries/{id}  { allow read: if own(uid); allow write: if false; }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

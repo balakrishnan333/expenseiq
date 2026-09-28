@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · ExpenseIQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>:root{--red:#FF4D5A;--purple:#7C5CFC;--bg:#F7F8FC;--card:#fff;--text:#171927;--muted:#737785;--border:#E9EAF0;--grad:linear-gradient(135deg,#FF4D5A,#FF6FB5)}
+[data-theme=dark]{--bg:#101116;--card:#181A22;--text:#fff;--muted:#9CA3AF;--border:#262936}
+*{box-sizing:border-box;margin:0}body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:1rem;background-image:radial-gradient(circle at 15% 10%,#ff6fb540,transparent 40%),radial-gradient(circle at 85% 90%,#7c5cfc40,transparent 40%)}
+.box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:2rem;box-shadow:0 20px 60px #7c5cfc22;animation:up .5s both}@keyframes up{from{opacity:0;transform:translateY(16px)}}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.4rem;margin-bottom:.3rem}.logo i{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--purple))}.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.t{color:var(--muted);margin-bottom:1.2rem}.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:14px;padding:4px;margin-bottom:1.2rem}
+.tabs button{border:0;background:none;padding:.6rem;border-radius:11px;font:inherit;font-weight:700;cursor:pointer;color:var(--muted)}.tabs .on{background:var(--card);color:var(--text);box-shadow:0 2px 8px #0001}
+label{display:block;font-weight:600;font-size:.85rem;color:var(--muted);margin-bottom:.9rem}input{display:block;width:100%;margin-top:.35rem;padding:.8rem 1rem;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit}input:focus{border-color:var(--red);outline:0}
+.btn{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);padding:.85rem;border-radius:14px;font:inherit;font-weight:700;cursor:pointer;transition:transform .2s}.btn:hover{transform:translateY(-2px)}.btn.p{background:var(--grad);color:#fff;border:0;box-shadow:0 8px 20px #ff4d5a44}
+.or{text-align:center;color:var(--muted);margin:1rem 0;font-size:.85rem}.lnk{background:none;border:0;color:var(--red);font:inherit;font-weight:700;cursor:pointer;margin-top:.8rem}#msg{min-height:1.4rem;margin-top:.8rem;color:var(--red);font-weight:600;font-size:.9rem}#msg.ok{color:var(--muted)}[hidden]{display:none!important}</style></head>
+<body><main class="box"><a class="logo" href="index.html"><i></i>Expense<b>IQ</b></a><p class="t">Smart Money. Simple Life.</p>
+<div class="tabs" role="tablist"><button class="on" data-f="login" role="tab">Log in</button><button data-f="register" role="tab">Register</button></div>
+<form id="login"><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="pw" type="password" autocomplete="current-password" required></label><button class="btn p">Log in</button><button type="button" class="lnk" data-f="forgot">Forgot password?</button></form>
+<form id="register" hidden><label>Full name<input name="name" autocomplete="name" required minlength="2"></label><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="pw" type="password" autocomplete="new-password" required minlength="8"></label><label>Confirm password<input name="pw2" type="password" autocomplete="new-password" required></label><button class="btn p">Create account</button></form>
+<form id="forgot" hidden><label>Email<input name="email" type="email" required></label><button class="btn p">Send reset email</button><button type="button" class="lnk" data-f="login">Back to log in</button></form>
+<div class="or">or</div><button class="btn" id="g">Continue with Google</button><p id="msg" role="alert"></p></main>
+<script type="module">
+import { auth, onAuthStateChanged } from './js/firebase.js';
+import { register, login, google, resetPassword, friendly } from './js/backend.js';
+const $ = s => document.querySelector(s), go = () => location.replace('index.html#/dashboard'); let busy = false;
+if (localStorage.getItem('eiq_dark') == '1') document.documentElement.dataset.theme = 'dark';
+onAuthStateChanged(auth, u => { if (u && !busy) go(); });
+const say = (m, ok) => { const e = $('#msg'); e.textContent = m; e.className = ok ? 'ok' : ''; };
+const show = f => { ['login', 'register', 'forgot'].forEach(x => $('#' + x).hidden = x != f); document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.f == f)); say(''); };
+document.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) show(b.dataset.f); });
+const run = async fn => { busy = true; say('Please wait...', 1); try { await fn(); go(); } catch (e) { busy = false; say(friendly(e)); } };
+const val = (f, n) => f.elements[n].value.trim();
+$('#login').onsubmit = e => { e.preventDefault(); run(() => login(val(e.target, 'email'), e.target.pw.value)); };
+$('#register').onsubmit = e => { e.preventDefault(); const f = e.target; if (f.pw.value != f.pw2.value) return say('Passwords do not match.'); run(() => register(val(f, 'name'), val(f, 'email'), f.pw.value)); };
+$('#forgot').onsubmit = async e => { e.preventDefault(); try { await resetPassword(val(e.target, 'email')); say('If that email has an account, a reset link is on its way.', 1); } catch (x) { say(friendly(x)); } };
+$('#g').onclick = () => run(google);
+</script></body>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyA5mFE_LaO8b_oMd1njarkEF-ntejc_UUs",
+    authDomain: "expenseiq-623f4.firebaseapp.com",
+    projectId: "expenseiq-623f4",
+    storageBucket: "expenseiq-623f4.firebasestorage.app",
+    messagingSenderId: "365382101941",
+    appId: "1:365382101941:web:bbfbca7a215052e7a5c7fc",
+    measurementId: "G-PVGY6Y0J6G"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+</html>

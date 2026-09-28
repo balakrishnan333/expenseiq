@@ -1,0 +1,6 @@
+{"indexes":[
+ {"collectionGroup":"transactions","queryScope":"COLLECTION","fields":[{"fieldPath":"category","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"}]},
+ {"collectionGroup":"transactions","queryScope":"COLLECTION","fields":[{"fieldPath":"type","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"}]},
+ {"collectionGroup":"recurringExpenses","queryScope":"COLLECTION","fields":[{"fieldPath":"active","order":"ASCENDING"},{"fieldPath":"nextDueDate","order":"ASCENDING"}]},
+ {"collectionGroup":"notifications","queryScope":"COLLECTION","fields":[{"fieldPath":"read","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]}
+],"fieldOverrides":[]}
