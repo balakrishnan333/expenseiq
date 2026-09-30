@@ -72,7 +72,7 @@ footer{padding:3rem 5vw;display:flex;flex-wrap:wrap;gap:2rem;justify-content:spa
 </style></head>
 <body><div id="root"><div class="ldr"><i></i></div></div><div id="toasts"></div>
 <script type="module">
-import {API,initBackend,logout,uploadReceipt,uploadPhoto,loadDemo,clearDemo,deleteAccount,hooks} from './js/backend.js';
+import {API,initBackend,logout,uploadReceipt,uploadPhoto,loadDemo,clearDemo,deleteAccount,hooks} from './backend.js';
 /* ---------- data service ---------- */
 const CATS={Food:['🍔','#FF4D5A'],Shopping:['🛍️','#7C5CFC'],Transport:['🚗','#4D8DFF'],Bills:['💡','#FF9F43'],Entertainment:['🎬','#FF6FB5'],Subscription:['🎧','#2BCB8A'],Groceries:['🛒','#2BCB8A'],Salary:['💰','#2BCB8A'],Healthcare:['🏥','#FF6FB5'],Education:['🎓','#4D8DFF'],Travel:['✈️','#FF9F43'],Subscriptions:['🎧','#2BCB8A'],Freelance:['💼','#2BCB8A'],Other:['💸','#737785']};
 const $=s=>document.querySelector(s),inr=n=>'₹'+Math.abs(n).toLocaleString('en-IN');
