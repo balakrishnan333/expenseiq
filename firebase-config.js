@@ -9,12 +9,11 @@
 //   appId: 'PASTE_APP_ID'
 // };
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyA5mFE_LaO8b_oMd1njarkEF-ntejc_UUs",
   authDomain: "expenseiq-623f4.firebaseapp.com",
   projectId: "expenseiq-623f4",
   storageBucket: "expenseiq-623f4.firebasestorage.app",
   messagingSenderId: "365382101941",
-  appId: "1:365382101941:web:bbfbca7a215052e7a5c7fc",
-  measurementId: "G-PVGY6Y0J6G"
+  appId: "1:365382101941:web:bbfbca7a215052e7a5c7fc"
 };
